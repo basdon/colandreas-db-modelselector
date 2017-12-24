@@ -10,8 +10,10 @@ int models[MAXMODELS];
 int actualmodelcount;
 
 #define MAX_FILENAME 50
-char ifile[MAX_FILENAME];
-char ofile[MAX_FILENAME];
+char ifilename[MAX_FILENAME];
+char ofilename[MAX_FILENAME];
+
+FILE *ifile, *ofile;
 
 void parseargs(int argc, char *argv[])
 {
@@ -27,10 +29,10 @@ void parseargs(int argc, char *argv[])
 		}
 		switch (argv[i][1]) {
 		case 'i':
-			memcpy(ifile, argv[i] + 2, arglen - 2);
+			memcpy(ifilename, argv[i] + 2, arglen - 2);
 			break;
 		case 'o':
-			memcpy(ofile, argv[i] + 2, arglen - 2);
+			memcpy(ofilename, argv[i] + 2, arglen - 2);
 			break;
 		}
 	}
@@ -38,11 +40,11 @@ void parseargs(int argc, char *argv[])
 
 int validateargs()
 {
-	if (ifile[0] == 0) {
+	if (ifilename[0] == 0) {
 		printf("specify the input file using -i<file> \n");
 		return 1;
 	}
-	if (ofile[0] == 0) {
+	if (ofilename[0] == 0) {
 		printf("specify the output file using -o<file> \n");
 		return 1;
 	}
@@ -72,8 +74,8 @@ _1:
 
 int main(int argc, char *argv[])
 {
-	ifile[0] = 0;
-	ofile[0] = 0;
+	ifilename[0] = 0;
+	ofilename[0] = 0;
 
 	parseargs(argc, argv);
 	if (validateargs()) {
@@ -82,6 +84,21 @@ int main(int argc, char *argv[])
 	if (readmodels()) {
 		return 1;
 	}
+
+	ifile = fopen(ifilename, "r");
+	if (ifile == NULL) {
+		printf("could not open input file '%s' for reading\n", ifilename);
+		return 1;
+	}
+	ofile = fopen(ofilename, "w");
+	if (ifile == NULL) {
+		printf("could not open output file '%s' for writing\n", ofilename);
+		fclose(ifile);
+		return 1;
+	}
+
+	fclose(ofile);
+	fclose(ifile);
 
 	return 0;
 }
