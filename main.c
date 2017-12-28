@@ -14,6 +14,8 @@ char ifilename[MAX_FILENAME];
 char ofilename[MAX_FILENAME];
 
 FILE *ifile, *ofile;
+int docopy;
+char buf[255];
 
 void parseargs(int argc, char *argv[])
 {
@@ -72,6 +74,129 @@ _1:
 	return 0;
 }
 
+void copy(int bytes)
+{
+	int actualbytes = fread(buf, 1, bytes, ifile);
+	if (actualbytes != bytes) {
+		goto err;
+	}
+	if (!docopy) {
+		return;
+	}
+	actualbytes = fwrite(buf, 1, bytes, ofile);
+	if (actualbytes != bytes) {
+		goto err;
+	}
+	return;
+err:
+	printf("possible corruption, missing %d bytes\n", bytes - actualbytes);
+}
+
+int readi(int bytes)
+{
+	int res = 0;
+	int i;
+	for (i = 0; i < bytes; i++) {
+		int c = fgetc(ifile);
+		if (c == EOF) {
+			printf("possible corruption, missing a byte\n");
+			continue;
+		}
+		res |= (c & 0xFF) << (i * 8);
+	}
+	return res;
+}
+
+void writei(int bytes, int i)
+{
+	while (bytes--) {
+		if (fputc(((i >> (bytes * 8)) & 0xFF), ofile) == EOF) {
+			printf("possible corruption, missing a byte\n");
+		}
+		i >>= 8;
+	}
+}
+
+int copyi(int bytes)
+{
+	int i = readi(bytes);
+	writei(bytes, i);
+	return i;
+}
+
+int domodel(int modelid) {
+	int i;
+	for (i = 0; i < actualmodelcount; i++) {
+		if (modelid == models[i]) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+void process()
+{
+	docopy = 1;
+
+	// 4 cadf
+	// 2 version
+	// 2 colCount
+	// 4 iplCount
+	//         colCount x
+	//         2 modelid
+	//         2 spherecount
+	//         2 boxcount
+	//         2 facecount
+	//                 spherecount x
+	//                 16 sizeof colsphere
+	//                 boxcount x
+	//                 24
+	//                 facecount x
+	//                 12 sizeof vertex
+	//                 12 sizeof vertex
+	//                 12 sizeof vertex
+	//         iplcount x
+	//                 2 modelid
+	//                 12 Vertex
+	//                 16 IPLRot
+
+	copy(4); // 'cadf'
+	copy(2); // version
+	// hmmmmm? v should be actualcolcount?
+	int colcount = copyi(2); // colcount
+	int iplcount = readi(4); // iplcount
+	writei(4, 0); // iplcount
+
+	printf("colcount %d\n", colcount);
+	printf("iplcount %d\n", iplcount);
+
+	int actualcols = 0;
+	int i, j;
+
+	for (i = 0; i < colcount; i++) {
+		docopy = 0;
+		int modelid = readi(2);
+		if (domodel(modelid)) {
+			docopy = 1;
+			++actualcols;
+			writei(2, modelid);
+		}
+
+		int spherecount = copyi(2);
+		int boxcount = copyi(2);
+		int facecount = copyi(2);
+		for (j = 0; j < spherecount; j++) {
+			copy(16);
+		}
+		for (j = 0; j < boxcount; j++) {
+			copy(24);
+		}
+		for (j = 0; j < facecount; j++) {
+			copy(36);
+		}
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	ifilename[0] = 0;
@@ -91,11 +216,13 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	ofile = fopen(ofilename, "w");
-	if (ifile == NULL) {
+	if (ofile == NULL) {
 		printf("could not open output file '%s' for writing\n", ofilename);
 		fclose(ifile);
 		return 1;
 	}
+
+	process();
 
 	fclose(ofile);
 	fclose(ifile);
