@@ -89,7 +89,7 @@ void copy(int bytes)
 	}
 	return;
 err:
-	printf("possible corruption, missing %d bytes\n", bytes - actualbytes);
+	printf("(reading) possible corruption, missing %d bytes\n", bytes - actualbytes);
 }
 
 int readi(int bytes)
@@ -99,7 +99,7 @@ int readi(int bytes)
 	for (i = 0; i < bytes; i++) {
 		int c = fgetc(ifile);
 		if (c == EOF) {
-			printf("possible corruption, missing a byte\n");
+			printf("(reading) possible corruption, missing a byte\n");
 			continue;
 		}
 		res |= (c & 0xFF) << (i * 8);
@@ -111,7 +111,7 @@ void writei(int bytes, int i)
 {
 	while (bytes--) {
 		if (fputc(((i >> (bytes * 8)) & 0xFF), ofile) == EOF) {
-			printf("possible corruption, missing a byte\n");
+			printf("(writing) possible corruption, missing a byte\n");
 		}
 		i >>= 8;
 	}
