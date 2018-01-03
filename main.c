@@ -109,7 +109,7 @@ int readi(int bytes)
 
 void writei(int bytes, int i)
 {
-	while (bytes--) {
+	while (docopy && bytes--) {
 		if (fputc(((i >> (bytes * 8)) & 0xFF), ofile) == EOF) {
 			printf("(writing) possible corruption, missing a byte\n");
 		}
@@ -210,7 +210,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	ifile = fopen(ifilename, "r");
+	ifile = fopen(ifilename, "rb");
 	if (ifile == NULL) {
 		printf("could not open input file '%s' for reading\n", ifilename);
 		return 1;
