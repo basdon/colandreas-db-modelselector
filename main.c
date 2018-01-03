@@ -107,10 +107,11 @@ int readi(int bytes)
 	return res;
 }
 
-void writei(int bytes, int i)
+void writei(int bytes, int _i)
 {
+	unsigned int i = (unsigned int) _i;
 	while (docopy && bytes--) {
-		if (fputc(((i >> (bytes * 8)) & 0xFF), ofile) == EOF) {
+		if (fputc(i & 0xFF, ofile) == EOF) {
 			printf("(writing) possible corruption, missing a byte\n");
 		}
 		i >>= 8;
