@@ -163,8 +163,7 @@ void process()
 
 	copy(4); // 'cadf'
 	copy(2); // version
-	// hmmmmm? v should be actualcolcount?
-	int colcount = copyi(2); // colcount
+	int colcount = copyi(2); // colcount (will be overridden)
 	int iplcount = readi(4); // iplcount
 	writei(4, 0); // iplcount
 
@@ -196,6 +195,13 @@ void process()
 			copy(36);
 		}
 	}
+
+	printf("actual cols %d\n", actualcols);
+	if (fseek(ofile, /*offset*/ 6, /*origin*/ SEEK_SET)) {
+		printf("could not reposition output stream, collisions count won't be adjusted\n");
+		return;
+	}
+	writei(2, actualcols);
 }
 
 int main(int argc, char *argv[])
