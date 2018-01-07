@@ -125,7 +125,8 @@ int copyi(int bytes)
 	return i;
 }
 
-int domodel(int modelid) {
+int domodel(int modelid)
+{
 	int i;
 	for (i = 0; i < actualmodelcount; i++) {
 		if (modelid == models[i]) {
