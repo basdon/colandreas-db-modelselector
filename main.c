@@ -239,7 +239,7 @@ int main(int argc, char *argv[])
 		printf("could not open input file '%s' for reading\n", ifilename);
 		return 1;
 	}
-	ofile = fopen(ofilename, "w");
+	ofile = fopen(ofilename, "wb");
 	if (ofile == NULL) {
 		printf("could not open output file '%s' for writing\n", ofilename);
 		fclose(ifile);
