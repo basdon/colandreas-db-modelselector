@@ -135,7 +135,7 @@ int domodel(int modelid) {
 	return 0;
 }
 
-void process()
+int process()
 {
 	docopy = 1;
 
@@ -197,11 +197,27 @@ void process()
 	}
 
 	printf("actual cols %d\n", actualcols);
-	if (fseek(ofile, /*offset*/ 6, /*origin*/ SEEK_SET)) {
-		printf("could not reposition output stream, collisions count won't be adjusted\n");
+	return actualcols;
+}
+
+void adjustcols(int actualcols)
+{
+	ofile = fopen(ofilename, "rb+");
+	if (ofile == NULL) {
+		printf("could not open output file '%s' to change actual colcount, actualcols will be wrong\n", ofilename);
 		return;
 	}
-	writei(2, actualcols);
+
+	if (fseek(ofile, /*offset*/ 6, /*origin*/ SEEK_SET)) {
+		printf("could not reposition output stream, actualcols will be wrong\n");
+		fclose(ofile);
+		return;
+	}
+
+	char bytes[] = { (0xFF & actualcols), (0xFF & (actualcols>>8))};
+	fwrite(bytes, 2, 1, ofile);
+
+	fclose(ofile);
 }
 
 int main(int argc, char *argv[])
@@ -229,10 +245,12 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	process();
+	int actualcols = process();
 
 	fclose(ofile);
 	fclose(ifile);
+
+	adjustcols(actualcols);
 
 	return 0;
 }
